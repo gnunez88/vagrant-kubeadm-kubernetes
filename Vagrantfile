@@ -11,23 +11,32 @@ IP_NW = IP_SECTIONS.captures[0]
 IP_START = Integer(IP_SECTIONS.captures[1])
 # Registry IP address
 IP_REGISTRY = settings["network"]["registry_ip"]
+DNS_REGISTRY = settings["network"]["registry_name"]
 # Gap between the first master node IP and the first worker node IP
 IP_GAP = 50
 NUM_WORKER_NODES = settings["nodes"]["workers"]["count"]
-NUM_MASTER_NODES = settings["nodes"]["control"]["count"]
+NUM_MASTER_NODES = settings["nodes"]["master"]["count"]
 
 # Cluster
 
 Vagrant.configure("2") do |config|
-  config.vm.provision "shell", env: { "IP_NW" => IP_NW, "IP_START" => IP_START, "NUM_WORKER_NODES" => NUM_WORKER_NODES }, inline: <<-SHELL
+  config.vm.provision "hosts", type: "shell",
+  env: { 
+    "IP_NW" => IP_NW,
+    "IP_START" => IP_START,
+    "NUM_WORKER_NODES" => NUM_WORKER_NODES,
+    "IP_REGISTRY" => IP_REGISTRY,
+    "DNS_REGISTRY" => DNS_REGISTRY
+    },
+  inline: <<-SHELL
     apt-get update -y
     for i in `seq 1 ${NUM_MASTER_NODES}`; do
-      echo "$IP_NW$((IP_START+i)) master0${i}" >> /etc/hosts
+      echo "$IP_NW$((IP_START + i)) master0${i}" >> /etc/hosts
     done
     for i in `seq 1 ${NUM_WORKER_NODES}`; do
-      echo "$IP_NW$((IP_START+IP_GAP+i)) node0${i}" >> /etc/hosts
+      echo "$IP_NW$((IP_START + IP_GAP + i)) node0${i}" >> /etc/hosts
     done
-    echo "$IP_REGISTRY registry" >> /etc/hosts
+    echo "$IP_REGISTRY $DNS_REGISTRY" >> /etc/hosts
   SHELL
 
   if `uname -m`.strip == "aarch64"
@@ -36,6 +45,33 @@ Vagrant.configure("2") do |config|
     config.vm.box = settings["software"]["box"]
   end
   config.vm.box_check_update = true
+
+  # Registry
+  config.vm.define "registry" do |registry|
+    registry.vm.hostname = DNS_REGISTRY
+    registry.vm.network "private_network", ip: IP_REGISTRY
+    registry.vm.provider "virtualbox" do |vb|
+      vb.cpus = settings["nodes"]["registry"]["cpu"]
+      vb.memory = settings["nodes"]["registry"]["memory"]
+      if settings["cluster_name"] and settings["cluster_name"] != ""
+        vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
+      end
+    end
+    registry.vm.provision "docker", type: "shell", path: "scripts/docker.sh"
+    registry.vm.provision "service", type: "shell", path: "scripts/registry-service.sh"
+    registry.vm.provision "reverse-proxy", type: "shell",
+      env: {
+        "COUNTRY" => settings["certificates"]["registry"]["country"],
+        "STATE" => settings["certificates"]["registry"]["state"],
+        "ORG" => settings["certificates"]["registry"]["org"],
+        "OU" => settings["certificates"]["registry"]["ou"],
+        "CN" => settings["certificates"]["registry"]["cn"],
+        "IP_REGISTRY" => IP_REGISTRY,
+        "DNS_REGISTRY" => DNS_REGISTRY
+      },
+      path: "scripts/reverse-proxy.sh"
+    registry.vm.provision "images", type: "shell", path: "scripts/registry-images.sh"
+  end
 
   # Master nodes
   (1..NUM_MASTER_NODES).each do |i|
@@ -49,8 +85,8 @@ Vagrant.configure("2") do |config|
         end
       end
       master.vm.provider "virtualbox" do |vb|
-        vb.cpus = settings["nodes"]["control"]["cpu"]
-        vb.memory = settings["nodes"]["control"]["memory"]
+        vb.cpus = settings["nodes"]["master"]["cpu"]
+        vb.memory = settings["nodes"]["master"]["memory"]
         if settings["cluster_name"] and settings["cluster_name"] != ""
           vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
         end
@@ -105,36 +141,18 @@ Vagrant.configure("2") do |config|
         path: "scripts/common.sh"
       node.vm.provision "script", type: "shell", path: "scripts/node.sh"
       node.vm.provision "docker", type: "shell", path: "scripts/docker.sh"
+      node.vm.provision "trust-registry", type: "shell",
+        env: {
+          "DNS_REGISTRY" => DNS_REGISTRY
+        },
+        path: "scripts/trust-registry.sh"
 
       # Only install the dashboard after provisioning the last worker (and when enabled).
       if i == NUM_WORKER_NODES and settings["software"]["dashboard"] and settings["software"]["dashboard"] != ""
-        node.vm.provision "shell", path: "scripts/dashboard.sh"
+        node.vm.provision "dashboard", type: "shell", path: "scripts/dashboard.sh"
       end
     end
 
   end
 end 
 
-
-# Registry
-
-Vagrant.configure("2") do |config|
-  config.vm.provision "shell", env: { "IP_REGISTRY" => IP_REGISTRY }, inline: <<-SHELL
-    apt-get update -y
-    echo "$IP_REGISTRY registry" >> /etc/hosts
-  SHELL
-  config.vm.define "registry" do |registry|
-    registry.vm.hostname = "registry"
-    registry.vm.network "private_network", ip: IP_REGISTRY
-    registry.vm.provider "virtualbox" do |vb|
-      vb.cpus = settings["nodes"]["registry"]["cpu"]
-      vb.memory = settings["nodes"]["registry"]["memory"]
-      if settings["cluster_name"] and settings["cluster_name"] != ""
-        vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
-      end
-    end
-    registry.vm.provision "docker", type: "shell", path: "scripts/docker.sh"
-    registry.vm.provision "service", type: "shell", path: "scripts/registry-service.sh"
-    registry.vm.provision "images", type: "shell", path: "scripts/registry-images.sh"
-  end
-end

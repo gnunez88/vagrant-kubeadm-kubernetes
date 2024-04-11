@@ -4,8 +4,6 @@
 
 set -euxo pipefail
 
-config_path="/vagrant/configs"
-
 # Docker Images
 
 ## Pulling Docker Images from Docker Hub

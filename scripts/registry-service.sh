@@ -4,8 +4,6 @@
 
 set -euxo pipefail
 
-config_path="/vagrant/configs"
-
 # Registry
 
 ## Pulling the image
@@ -21,7 +19,7 @@ services:
     container_name: docker-registry
     image: registry:2
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5001:5000"
     environment:
       REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/registry
     volumes:

@@ -12,13 +12,14 @@ network:
   # Worker IPs are incremented from the control IP after a range gap.
   control_ip: 192.168.100.10
   registry_ip: 192.168.100.20
+  registry_name: registry
   dns_servers:
     - 8.8.8.8
     - 1.1.1.1
   pod_cidr: 172.16.1.0/16
   service_cidr: 172.17.1.0/18
 nodes:
-  control:
+  master:
     count: 1
     cpu: 2
     memory: 4096
@@ -29,6 +30,13 @@ nodes:
   registry:
     cpu: 1
     memory: 1024
+certificates:
+  registry:
+    country: ES
+    state: Barcelona
+    org: My Private Org
+    ou: IT
+    cn: registry
 # Mount additional shared folders from the host into each virtual machine.
 # Note that the project directory is automatically mounted at /vagrant.
 # shared_folders:
