@@ -150,7 +150,7 @@ There is a web interface through port `8080/tcp`:
 http://<registry-ip>:8080/
 ```
 
-Thanks to the [Docker Registry Frontend project][github-konradkleine-docker-registry-frontend]
+Thanks to the [Docker Registry Frontend project][docker-konradkleine-docker-registry-frontend]
 
 ## Some k8s Projects
 
