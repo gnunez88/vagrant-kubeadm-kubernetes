@@ -20,9 +20,8 @@ sudo systemctl restart systemd-resolved
 # disable swap
 sudo swapoff -a
 
-# keeps the swaf off during reboot
+# keeps the swap off during reboot
 (crontab -l 2>/dev/null; echo "@reboot /sbin/swapoff -a") | crontab - || true
-sudo apt-get update -y
 
 
 # Create the .conf file to load the modules at bootup
@@ -47,7 +46,7 @@ sudo sysctl --system
 ## Install CRIO Runtime
 
 sudo apt-get update -y
-apt-get install -y software-properties-common curl apt-transport-https ca-certificates
+apt-get install -y software-properties-common curl apt-transport-https ca-certificates jq
 
 curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/prerelease:/main/deb/Release.key |
     gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
@@ -59,7 +58,6 @@ sudo apt-get install -y cri-o
 
 sudo systemctl daemon-reload
 sudo systemctl enable crio --now
-sudo systemctl start crio.service
 
 echo "CRI runtime installed successfully"
 
@@ -70,8 +68,6 @@ echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.
 
 sudo apt-get update -y
 sudo apt-get install -y kubelet="$KUBERNETES_VERSION" kubectl="$KUBERNETES_VERSION" kubeadm="$KUBERNETES_VERSION"
-sudo apt-get update -y
-sudo apt-get install -y jq
 
 # Disable auto-update services
 sudo apt-mark hold kubelet kubectl kubeadm cri-o
