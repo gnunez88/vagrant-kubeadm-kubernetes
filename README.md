@@ -1,6 +1,6 @@
 # Vagrantfile and Scripts to Automate Kubernetes Setup using Kubeadm
 
-The original project is [techiescamp Github][github-techiescamp-kubernetes-cluster-vagrant].
+The original project is [techiescamp Github][github-techiescamp-vagrant-kubeadm-kubernetes].
 
 I added:
 
@@ -176,8 +176,8 @@ If the image is created by yourself, just omit the first two steps.
 
 
 
+[docker-konradkleine-docker-registry-frontend]: https://hub.docker.com/r/konradkleine/docker-registry-frontend/
 [github-BishopFox-badPods]: https://github.com/BishopFox/badPods
-[github-konradkleine-docker-registry-frontend]: https://github.com/konradkleine/docker-registry-frontend
 [github-madhuakula-kubernetes-goat]: https://github.com/madhuakula/kubernetes-goat
 [github-OWASP-wrongsecrets]: https://github.com/OWASP/wrongsecrets
 [github-techiescamp-vagrant-kubeadm-kubernetes]: https://github.com/techiescamp/vagrant-kubeadm-kubernetes
