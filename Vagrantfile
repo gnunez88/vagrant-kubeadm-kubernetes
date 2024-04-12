@@ -24,6 +24,7 @@ Vagrant.configure("2") do |config|
   env: { 
     "IP_NW" => IP_NW,
     "IP_START" => IP_START,
+    "IP_GAP" => IP_GAP,
     "NUM_WORKER_NODES" => NUM_WORKER_NODES,
     "IP_REGISTRY" => IP_REGISTRY,
     "DNS_REGISTRY" => DNS_REGISTRY
@@ -91,7 +92,7 @@ Vagrant.configure("2") do |config|
           vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
         end
       end
-      master.vm.provision "shell",
+      master.vm.provision "common", type: "shell",
         env: {
           "DNS_SERVERS" => settings["network"]["dns_servers"].join(" "),
           "ENVIRONMENT" => settings["environment"],
@@ -100,7 +101,7 @@ Vagrant.configure("2") do |config|
           "OS" => settings["software"]["os"]
         },
         path: "scripts/common.sh"
-      master.vm.provision "shell",
+      master.vm.provision "calico", type: "shell",
         env: {
           "CALICO_VERSION" => settings["software"]["calico"],
           "CONTROL_IP" => IP_NW + "#{IP_START + i}",
@@ -130,7 +131,7 @@ Vagrant.configure("2") do |config|
           vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
         end
       end
-      node.vm.provision "shell",
+      node.vm.provision "common", type: "shell",
         env: {
           "DNS_SERVERS" => settings["network"]["dns_servers"].join(" "),
           "ENVIRONMENT" => settings["environment"],
@@ -139,7 +140,7 @@ Vagrant.configure("2") do |config|
           "OS" => settings["software"]["os"]
         },
         path: "scripts/common.sh"
-      node.vm.provision "script", type: "shell", path: "scripts/node.sh"
+      node.vm.provision "node", type: "shell", path: "scripts/node.sh"
       node.vm.provision "docker", type: "shell", path: "scripts/docker.sh"
       node.vm.provision "trust-registry", type: "shell",
         env: {
