@@ -81,6 +81,9 @@ server {
 
   server_name registry;
 
+  # To upload Docker images and avoid error 413 "Request Entity Too Large"
+  client_max_body_size 0;
+
   location / {
     proxy_pass http://backend_registry;
     include proxy_params;

@@ -17,7 +17,7 @@ I added:
 
 1. Working Vagrant setup
 2. Working VirtualBox
-3. 11 GiB + RAM workstation as the VMs use 3 vCPUS and 4+ GB RAM
+3. 10 GiB + RAM workstation as the VMs use 3 vCPUS and 4+ GB RAM
 
 ## For MAC/Linux Users
 
@@ -138,7 +138,7 @@ To see the images available, you can make request to `registry:5000` from within
 node in the cluster, like this:
 
 ```shell
-curl -sS http://registry:5000/v2/_catalog | jq '.repositories[]'
+curl -sS https://registry:5000/v2/_catalog | jq '.repositories[]'
 ```
 
 From outside the cluster, you have to substitute `registry` with the IP of the
